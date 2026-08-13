@@ -33,6 +33,25 @@ void ubxChecksum(const uint8_t *payload, uint16_t len, uint8_t &ckA, uint8_t &ck
   }
 }
 
+
+void enableNMEAonUART1(uint8_t nmeaMsgId, uint8_t rate) {
+  // UBX-CFG-MSG payload (8 bytes): msgClass, msgID, rateI2C, rateUART1, rateUART2, rateUSB, rateSPI, reserved
+  uint8_t payload[8] = {0xF0, nmeaMsgId, 0, rate, 0, 0, 0, 0};
+
+  uint8_t ckA, ckB;
+  ubxChecksum(payload, sizeof(payload), ckA, ckB);
+
+  uint8_t msg[16]; // 2 sync + 2 class/id + 2 len + 8 payload + 2 cksum = 16
+  msg[0] = 0xB5; msg[1] = 0x62;
+  msg[2] = 0x06; msg[3] = 0x01;       // CFG-MSG
+  msg[4] = 0x08; msg[5] = 0x00;       // length = 8
+  memcpy(&msg[6], payload, 8);
+  msg[14] = ckA; msg[15] = ckB;
+
+  sendUBX(msg, sizeof(msg));
+}
+
+
 // Send UBX-CFG-MSG to set rate for a given message on UART1
 // For NMEA messages on u-blox M8: msgClass = 0xF0, msgID selects sentence (e.g. GSV)
 void setNMEAMessageRate_UART1(uint8_t nmeaMsgId, uint8_t rate) {
@@ -139,14 +158,23 @@ void setup() {
   
   // Serial to GPS module (NEO-M8N default is usually 9600 baud)
   GPSSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN); 
-
   delay(200);
   // Enable NMEA GSV on UART1 at rate 1 (once per navigation solution)
   // NMEA IDs in u-blox M8: GGA=0x00, GLL=0x01, GSA=0x02, GSV=0x03, RMC=0x04, VTG=0x05, etc.
-  setNMEAMessageRate_UART1(0x03, 1);
+  // Enable GSV + GSA on UART1
+
+  enableNMEAonUART1(0x03, 1); // GSV
+  enableNMEAonUART1(0x02, 1); // GSA (recommended for satellite status/DOP)
+
+  // Optional: if you want to reduce clutter, you can disable others by setting rate=0
+  // enableNMEAonUART1(0x00, 1); // GGA keep
+  // enableNMEAonUART1(0x04, 1); // RMC keep
+
+
+  //  setNMEAMessageRate_UART1(0x03, 1);
 
   // (Optional) also enable GSA if you want DOP/active satellites
-  setNMEAMessageRate_UART1(0x02, 1);
+//  setNMEAMessageRate_UART1(0x02, 1);
 
 
 }
