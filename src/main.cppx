@@ -80,6 +80,102 @@ void setNMEAMessageRate_UART1(uint8_t nmeaMsgId, uint8_t rate) {
 }
 
 
+void sendUBX_CFG_MSG(uint8_t targetMsgClass, uint8_t targetMsgId, uint8_t rateUART1)
+{
+  // UBX-CFG-MSG (0x06 0x01), length 8 on many M8 firmwares
+  uint8_t payload[8] = {
+    targetMsgClass, targetMsgId,
+    0,              // rateI2C
+    rateUART1,      // rateUART1
+    0,              // rateUART2
+    0,              // rateUSB
+    0,              // rateSPI
+    0               // reserved
+  };
+
+  uint8_t ckA, ckB;
+  ubxChecksum(payload, sizeof(payload), ckA, ckB);
+
+  uint8_t msg[16];
+  msg[0] = 0xB5; msg[1] = 0x62;
+  msg[2] = 0x06; msg[3] = 0x01;     // CFG-MSG
+  msg[4] = 0x08; msg[5] = 0x00;     // length = 8
+  memcpy(&msg[6], payload, 8);
+  msg[14] = ckA; msg[15] = ckB;
+
+  sendUBX(msg, sizeof(msg));
+}
+
+
+enum AckResult { ACK_NONE, ACK_ACK, ACK_NAK };
+
+AckResult waitForAck(uint8_t ackForClass, uint8_t ackForId, uint32_t timeoutMs)
+{
+  // Simple UBX frame parser state machine
+  uint8_t state = 0;
+  uint8_t cls = 0, id = 0;
+  uint16_t len = 0;
+  uint16_t payloadCount = 0;
+  uint8_t ckA = 0, ckB = 0;
+  uint8_t calcA = 0, calcB = 0;
+
+  uint8_t payload[2]; // enough for ACK payload (2 bytes)
+  uint32_t start = millis();
+
+  while (millis() - start < timeoutMs)
+  {
+    while (GPSSerial.available())
+    {
+      uint8_t b = GPSSerial.read();
+
+      switch (state)
+      {
+        case 0: state = (b == 0xB5) ? 1 : 0; break;
+        case 1: state = (b == 0x62) ? 2 : 0; calcA = calcB = 0; break;
+
+        case 2: cls = b; calcA += b; calcB += calcA; state = 3; break;
+        case 3: id  = b; calcA += b; calcB += calcA; state = 4; break;
+
+        case 4: len = b; calcA += b; calcB += calcA; state = 5; break;
+        case 5: len |= (uint16_t)b << 8; calcA += b; calcB += calcA;
+                payloadCount = 0;
+                // We only care about ACK frames which have len=2, but parse generically
+                state = (len == 0) ? 7 : 6;
+                break;
+
+        case 6:
+          // read payload bytes
+          if (payloadCount < sizeof(payload)) payload[payloadCount] = b;
+          payloadCount++;
+          calcA += b; calcB += calcA;
+          if (payloadCount >= len) state = 7;
+          break;
+
+        case 7: ckA = b; state = 8; break;
+        case 8: ckB = b; state = 0;
+          // validate checksum
+          if (ckA == calcA && ckB == calcB)
+          {
+            // Is it an ACK?
+            if (cls == 0x05 && (id == 0x01 || id == 0x00) && len == 2)
+            {
+              uint8_t ackedClass = payload[0];
+              uint8_t ackedId    = payload[1];
+
+              if (ackedClass == ackForClass && ackedId == ackForId)
+              {
+                return (id == 0x01) ? ACK_ACK : ACK_NAK;
+              }
+            }
+          }
+          break;
+      }
+    }
+  }
+  return ACK_NONE;
+}
+
+
 // ------------------------------------------------------------
 // AXP2101 helpers
 // ------------------------------------------------------------
