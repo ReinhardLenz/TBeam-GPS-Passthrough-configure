@@ -1,7 +1,7 @@
 
 ## T-beam GPS communication
 
-the big problem with a T-Beam is, that there is no "direct access" from the computer to the UBLOX GPS NEO M8N chip. But when I want to define and go deeper into the communication between ESP32 and UBLOX GPS NEO M8N chip , I need to use PYGPSClient or the U-Center analyzing program. Normally, with this PYGPSClient, I need to directly connect the computer to UBLOX GPS NEO M8N chip. But in T-Beam (which is mostly made for Meshtastic) I cannot do it. Here, I need a "Passthrough" program, so the everything transmitted from UBLOX GPS NEO M8N to ESP32, is directly forwarded to computer where the signal can be analyzed with PYGPSClient program. But there is a complication: the configuration signals from PYGPSClient to UBLOX GPS NEO M8N  cannot be forwarded by this program. THe reason, I don't know exactly, but I think, in the "loop" part would have to be some specialized "flush PS input"functions that would allow messages from the computer to "get through" to the GPS chip. T-Beam does not allow to connect a logic analyzer to these TX RX pins. So, anything to do with configuration must be done in the setup part of the program. This program is a "crutch"  or some kind of "walking aid" for the PYGPSClient program.
+the big problem with a T-Beam is, that there is no "direct access" from the computer to the UBLOX GPS NEO M8N chip. But when I want to define and go deeper into the communication between ESP32 and UBLOX GPS NEO M8N chip , I need to use PYGPSClient or the U-Center analyzing program. Normally, with this PYGPSClient, I need to directly connect the computer to UBLOX GPS NEO M8N chip. But in T-Beam (which is mostly made for Meshtastic) I cannot do it. Here, I need a "Passthrough" program, so the everything transmitted from UBLOX GPS NEO M8N to ESP32, is directly forwarded to computer where the signal can be analyzed with PYGPSClient program. But there is a complication: the configuration signals from PYGPSClient to UBLOX GPS NEO M8N  cannot be forwarded by this program. THe reason, I don't know exactly, but I think, in the "loop" part would have to be some specialized "flush GPS input" functions that would allow messages from the computer to "get through" to the GPS chip. T-Beam does not allow to connect a logic analyzer to these TX RX pins. So, anything to do with configuration must be done in the setup part of the program. This program is a "crutch"  or some kind of "walking aid" for the PYGPSClient program.
 
 
 The program is installed on a T-Beam (a small box containing an ESP32, a NEO-M8N GPS receiver, and an AXP2101 power management chip). Its purpose is twofold:
@@ -33,9 +33,9 @@ After all these commands, it reads what the GPS sent in the meantime and display
 The program simply shuttles between the following:
 
 GPS Serial → USB: Everything the GPS sends is immediately copied to your computer (serial port).
-USB Serial → GPS: Everything you type on the serial monitor is sent directly to the GPS.
+USB Serial → GPS: Everything you type on the serial monitor is sent directly to the GPS. Basically you cann also comment this line out, because anyway it will not transmit anything, or so I think
 
-This allows you to communicate directly with the GPS while the program is running.
+But basically this allows you to communicate directly with the GPS while the program is running.
 
 ### 3. Hidden Functions
 
@@ -135,7 +135,13 @@ pygpsclient
 
 ## Link
 
+useful program for GPS devices:
+
 https://wiki.paparazziuav.org/wiki/Sensors/GPS
+
+T-Beam pin map:
+
+https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series/blob/master/docs/en/t_beam/t_beam_hw.md
 
 ## License
 -	This project is licensed under the MIT License. See the LICENSE file for details.
