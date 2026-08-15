@@ -205,7 +205,7 @@ void setup()
 
 
   flushGpsInput(200);
-  sendUBX_CFG_MSG(0xF0, 0x04, 0); // RMC off
+  sendUBX_CFG_MSG(0xF0, 0x04, 0); // RMC off Recommended Minimum navigation data.
   AckResult r = waitForAck(0x06, 0x01, 4000);
   if (r == ACK_OK) Serial.println("✅ Got ACK-ACK for CFG-MSG");
   else if (r == ACK_NAK) Serial.println("❌ Got ACK-NAK for CFG-MSG");
@@ -216,7 +216,7 @@ void setup()
 
 
   flushGpsInput(200);
-
+/*
     // Enable UBX-NAV-SAT (01 35) on UART1, rate = 1
   sendUBX_CFG_MSG(0x01, 0x35, 1);
 
@@ -225,6 +225,25 @@ void setup()
   if (r2 == ACK_OK) Serial.println("✅ Got ACK-ACK enabling NAV-SAT");
   else if (r2 == ACK_NAK) Serial.println("❌ Got ACK-NAK enabling NAV-SAT");
   else Serial.println("⚠️ ACK TIMEOUT enabling NAV-SAT");
+
+*/
+//disable   UBX-NAV-SAT 
+  sendUBX_CFG_MSG(0x01,  0x35, 0); // GGA
+  waitForAck(0x06, 0x01, 2000);
+  flushGpsInput(200);
+
+
+
+  sendUBX_CFG_MSG(0x01, 0x07, 1); //  contains position, time, fix status, number of satellites, altitude, speed, heading, accuracy estimates, etc
+
+  // ACK is for CFG-MSG (06 01)
+  AckResult r2 = waitForAck(0x06, 0x01, 1500);
+  if (r2 == ACK_OK) Serial.println("✅ Got ACK-ACK enabling UBX-NAV-PVT");
+  else if (r2 == ACK_NAK) Serial.println("❌ Got ACK-NAK enabling UBX-NAV-PVT");
+  else Serial.println("⚠️ ACK TIMEOUT enabling UBX-NAV-PVT");
+
+
+
   flushGpsInput(200);
   // Disable all common NMEA messages on UART1
   sendUBX_CFG_MSG(0xF0, 0x00, 0); // GGA
@@ -253,5 +272,7 @@ while (GPSSerial.available()) {
   Serial.print(' ');
 }
 }
-
-void loop() {}
+void loop() {
+  while (GPSSerial.available()) Serial.write(GPSSerial.read());
+  while (Serial.available()) GPSSerial.write(Serial.read());
+}
