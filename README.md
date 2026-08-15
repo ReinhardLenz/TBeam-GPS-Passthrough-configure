@@ -1,4 +1,8 @@
-# T-beam GPS communication
+
+## T-beam GPS communication
+
+the big problem with a T-Beam is, that there is no "direct access" from the computer to the UBLOX GPS NEO M8N chip. But when I want to define and go deeper into the communication between ESP32 and UBLOX GPS NEO M8N chip , I need to use PYGPSClient or the U-Center analyzing program. Normally, with this PYGPSClient, I need to directly connect the computer to UBLOX GPS NEO M8N chip. But in T-Beam (which is mostly made for Meshtastic) I cannot do it. Here, I need a "Passthrough" program, so the everything transmitted from UBLOX GPS NEO M8N to ESP32, is directly forwarded to computer where the signal can be analyzed with PYGPSClient program. But there is a complication: the configuration signals from PYGPSClient to UBLOX GPS NEO M8N  cannot be forwarded by this program. So, anything to do with configuration must be done in the setup part of the program. This program is a "crutch"  or some kind of "walking aid" for the PYGPSClient program.
+
 
 The program is installed on a T-Beam (a small box containing an ESP32, a NEO-M8N GPS receiver, and an AXP2101 power management chip). Its purpose is twofold:
 
