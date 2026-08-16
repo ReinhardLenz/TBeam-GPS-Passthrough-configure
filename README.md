@@ -99,6 +99,12 @@ Then start pyGPSClient by just writing
 pygpsclient
 ```
 
+## installation Video
+
+[![Demo video](https://img.youtube.com/vi/e_EbiwOxSh4/0.jpg)](https://www.youtube.com/watch?v=e_EbiwOxSh4)
+
+
+
 ## Hardware / Components Used
 
 ### Boards
