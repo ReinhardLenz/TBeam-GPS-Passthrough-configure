@@ -15,7 +15,12 @@ To act as a bridge between your computer (connected via USB) and the GPS: everyt
 
 ### 1. At startup (setup)
 Power supply check:
-The program attempts to communicate with the AXP2101 chip (which manages the voltages). If it finds a signal, it activates the output that powers the GPS (3.3V). Otherwise, it displays a warning.
+The program attempts to communicate with the AXP2101 chip (which manages the voltages). If it finds a signal, it 
+activates the output that powers the GPS (3.3V). Otherwise, it displays a warning.
+
+
+![Diagram](images/T-beam_data_bus_overview.jpg)
+
 
 Initializing the GPS serial port:
 This opens a 9600 baud UART connection between the ESP32 and the GPS (pins 34 for receiving, 12 for transmitting).
